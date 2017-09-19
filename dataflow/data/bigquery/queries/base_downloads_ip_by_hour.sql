@@ -86,19 +86,16 @@ SELECT
   SUM(web100_log_entry.snap.SndLimTimeCwnd) as sum_lim_time_cwnd,
   SUM(web100_log_entry.snap.SndLimTimeSnd) as sum_lim_time_snd
 FROM
-  [plx.google:m_lab.ndt.all]
+  [measurement-lab:public.ndt]
 WHERE
   -- Limit to within a time region
-  USEC_TO_TIMESTAMP(UTC_USEC_TO_HOUR(web100_log_entry.log_time * INTEGER(POW(10, 6)))) >= "{0}"
-  AND USEC_TO_TIMESTAMP(UTC_USEC_TO_HOUR(web100_log_entry.log_time * INTEGER(POW(10, 6)))) < "{1}"
-
+  _PARTITIONTIME BETWEEN TIMESTAMP('{0}') AND TIMESTAMP('{1}')
+  AND web100_log_entry.deltas.is_last=true  
 
   AND web100_log_entry.snap.SndLimTimeSnd IS NOT NULL
   AND web100_log_entry.snap.SndLimTimeCwnd IS NOT NULL
   AND web100_log_entry.snap.SndLimTimeRwin IS NOT NULL
-  AND project = 0
-  AND blacklist_flags = 0
-  AND web100_log_entry.is_last_entry = True
+  AND anomalies.blacklist_flags = 0
   AND connection_spec.data_direction = 1
   AND web100_log_entry.snap.CongSignals > 0
   AND web100_log_entry.snap.HCThruOctetsAcked >= 8192
